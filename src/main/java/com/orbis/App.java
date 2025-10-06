@@ -1,7 +1,7 @@
 package com.orbis;
 
 /**
- * Hello world!
+ *
  *
  */
 public class App 
