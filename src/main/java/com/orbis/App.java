@@ -1,5 +1,7 @@
 package com.orbis;
 
+import com.orbis.exception.annotations.ThrowRuntimeException;
+
 /**
  *
  *pippo
@@ -10,4 +12,6 @@ public class App
     {
         System.out.println( "Hello World!" );
     }
+
+
 }
