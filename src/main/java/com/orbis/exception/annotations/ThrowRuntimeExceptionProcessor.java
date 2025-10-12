@@ -31,8 +31,8 @@ public class ThrowRuntimeExceptionProcessor extends AbstractProcessor {
             method = (ExecutableElement) element;
             annotation = method.getAnnotation(ThrowRuntimeException.class);
             packageName = processingEnv.getElementUtils()
-//                    .getPackageOf(method.getEnclosingElement())
-//                    .getQualifiedName()
+                    .getPackageOf(method.getEnclosingElement())
+                    .getQualifiedName()
                     .toString();
 
             className = annotation.nameException()+"Impl";
@@ -41,10 +41,10 @@ public class ThrowRuntimeExceptionProcessor extends AbstractProcessor {
                 JavaFileObject file = processingEnv.getFiler().createSourceFile(packageName + "." + className);
                 try (Writer writer = file.openWriter()) {
                     writer.write("package " + packageName + ";\n\n");
-                    writer.write("public class "+className + "extends RuntimeException {\n");
+                    writer.write("public class "+className + " extends RuntimeException {\n");
                     writer.write("    private final Object[] params;\n\n");
 
-                    writer.write("    public"+className+" CustomExptions(String message) {\n");
+                    writer.write("    public " + className+" (String message) {\n");
                     writer.write("        super(message);\n");
                     writer.write("        this.params = null;\n");
                     writer.write("    }\n\n");
