@@ -6,8 +6,8 @@ import javax.annotation.processing.*;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
-import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
+import javax.tools.Diagnostic;
 import javax.tools.JavaFileObject;
 import java.io.Writer;
 import java.util.Set;
@@ -18,38 +18,47 @@ import java.util.Set;
 public class ThrowRuntimeExceptionProcessor extends AbstractProcessor {
     @Override
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
-        ExecutableElement method;
-        ThrowRuntimeException annotation;
-        String className;
+        TypeElement packagePlusInterfaceName;
+        ThrowRuntimeException throwRuntimeException;
+        String exceptionName;
         String packageName;
-        Set<? extends Element> annotatedElements = roundEnv.getElementsAnnotatedWith(ThrowRuntimeException.class);
+        Set<? extends Element> annotatedElementsWithThrowRuntimeException = roundEnv.getElementsAnnotatedWith(ThrowRuntimeException.class);
 
-        for (Element element : annotatedElements) {
-            if (element.getKind() != ElementKind.METHOD)
+//        processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE,
+//                "annotatedElementsWithThrowRuntimeException " + annotatedElementsWithThrowRuntimeException );
+
+        for (Element element : annotatedElementsWithThrowRuntimeException) {
+
+
+            if (element.getKind() != ElementKind.INTERFACE)
                 continue;
 
-            method = (ExecutableElement) element;
-            annotation = method.getAnnotation(ThrowRuntimeException.class);
+            packagePlusInterfaceName = (TypeElement) element; // Package where user created the interface with the annotation
+            throwRuntimeException = packagePlusInterfaceName.getAnnotation(ThrowRuntimeException.class);
             packageName = processingEnv.getElementUtils()
-                    .getPackageOf(method.getEnclosingElement())
+                    .getPackageOf(packagePlusInterfaceName)
                     .getQualifiedName()
                     .toString();
 
-            className = annotation.nameException()+"Impl";
+            exceptionName = throwRuntimeException.nameException();
+            processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE,
+                    "Genero eccezione: " + packageName + "." + exceptionName);
 
+            processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE,
+                    "Prendo l'annotazione da: " + packagePlusInterfaceName + " la riga= throwRuntimeException:" + throwRuntimeException);
             try {
-                JavaFileObject file = processingEnv.getFiler().createSourceFile(packageName + "." + className);
+                JavaFileObject file = processingEnv.getFiler().createSourceFile(packageName + "." + exceptionName);
                 try (Writer writer = file.openWriter()) {
                     writer.write("package " + packageName + ";\n\n");
-                    writer.write("public class "+className + " extends RuntimeException {\n");
+                    writer.write("public class "+exceptionName + " extends RuntimeException {\n");
                     writer.write("    private final Object[] params;\n\n");
 
-                    writer.write("    public " + className+" (String message) {\n");
+                    writer.write("    public " + exceptionName+" (String message) {\n");
                     writer.write("        super(message);\n");
                     writer.write("        this.params = null;\n");
                     writer.write("    }\n\n");
 
-                    writer.write("    public "+className+"(String message, Object[] params) {\n");
+                    writer.write("    public "+exceptionName+"(String message, Object[] params) {\n");
                     writer.write("        super(message);\n");
                     writer.write("        this.params = params;\n");
                     writer.write("    }\n");
