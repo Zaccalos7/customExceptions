@@ -1,7 +1,7 @@
 package com.orbis.myUsage;
 
-import com.orbis.exception.annotations.ThrowRuntimeException;
+import com.orbis.exception.annotations.ExceptionMaker;
 
-@ThrowRuntimeException(nameException = "MyUsageExceptions")
+@ExceptionMaker(className = "MyUsageExceptions")
 public interface MyUsageInterface {
 }
