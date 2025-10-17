@@ -8,8 +8,11 @@ import javax.lang.model.element.*;
 import javax.tools.Diagnostic;
 import javax.tools.JavaFileObject;
 import java.io.Writer;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @AutoService(Processor.class)
 @SupportedAnnotationTypes("com.orbis.exception.annotations.ExceptionRunner")
@@ -19,24 +22,39 @@ public class ExceptionRunnerProcessor extends AbstractProcessor {
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnvironment) {
 
         Set<? extends Element> annotatedElementWithRunException = roundEnvironment.getElementsAnnotatedWith(ExceptionRunner.class);
+        ExecutableElement methodElement;
+        Element enclosingElement;
+        PackageElement packageElement;
+        List<? extends VariableElement> methodParameters;
+        List<String> typeParameters = new ArrayList<>();
+
         String methodName;
         String interfaceName;
         String packageName;
         String exceptionNameClass;
+        String returnMethodType;
 
         for(Element element : annotatedElementWithRunException){
             if(element.getKind() != ElementKind.METHOD)
                 continue;
 
-            ExecutableElement methodElement = (ExecutableElement) element;
+            methodElement = (ExecutableElement) element;
             methodName = methodElement.getSimpleName().toString();
+            returnMethodType = methodElement.getReturnType().toString();
+            methodParameters = methodElement.getParameters();
+
+            for(VariableElement param : methodParameters){
+                String paramName = param.getSimpleName().toString();
+                String paramType = param.asType().toString();
+                typeParameters.add(paramType+" "+paramName);
+            }
 
             exceptionNameClass = methodElement.getAnnotation(ExceptionRunner.class).exceptionMethod();
 
-            Element enclosingElement = methodElement.getEnclosingElement();
+            enclosingElement = methodElement.getEnclosingElement();
             interfaceName = enclosingElement.getSimpleName().toString();
 
-            PackageElement packageElement = processingEnv.getElementUtils().getPackageOf(enclosingElement);
+            packageElement = processingEnv.getElementUtils().getPackageOf(enclosingElement);
             packageName = packageElement.getQualifiedName().toString();
 
             processingEnv.getMessager().printMessage(
@@ -59,7 +77,7 @@ public class ExceptionRunnerProcessor extends AbstractProcessor {
 
             try {
                 JavaFileObject javaFileObject = processingEnv.getFiler().createSourceFile(packageName + "." + interfaceName+"Impl");
-                writeThrowCustomException(javaFileObject, packageName, interfaceName, exceptionNameClass);
+                writeThrowCustomException(javaFileObject, methodName, packageName, interfaceName, exceptionNameClass, returnMethodType, typeParameters);
             } catch (Exception e) {
                 processingEnv.getMessager().printMessage(Diagnostic.Kind.ERROR, "error:"+ e.getLocalizedMessage()+"/t"+ Arrays.toString(e.getStackTrace()));
             }
@@ -68,19 +86,20 @@ public class ExceptionRunnerProcessor extends AbstractProcessor {
         return true;
     }
 
-    public void writeThrowCustomException(JavaFileObject javaFileObject, String packageName, String interfaceName, String exceptionNameClass){
+    public void writeThrowCustomException(JavaFileObject javaFileObject, String methodName, String packageName, String interfaceName, String exceptionNameClass, String returnMethodType, List<String> typeParameters){
+        String generatedNameClass = interfaceName + "Impl";
+        String methodArguments = String.join(",", typeParameters);
+
         try (Writer writer = javaFileObject.openWriter()) {
             writer.write("package " + packageName + ";\n\n");
             writer.write("import " + packageName + "."+exceptionNameClass+";\n\n");
-            writer.write("public abstract class " + interfaceName+"Impl" + " {\n\n");
 
-            writer.write("    void createException(String message) {\n");
+            writer.write("public class " + generatedNameClass+" implements "+interfaceName + " {\n\n");
+
+            writer.write("\t@Override\n");
+            writer.write("    public "+returnMethodType+" "+methodName+"("+methodArguments+")" +" {\n");
             writer.write("        throw new CustomException(message);\n");
             writer.write("    }\n\n");
-
-            writer.write("    void createException(String message, Object[] params) {\n");
-            writer.write("        throw new CustomException(message, params);\n");
-            writer.write("    }\n");
 
             writer.write("}\n");
         } catch (Exception e) {
