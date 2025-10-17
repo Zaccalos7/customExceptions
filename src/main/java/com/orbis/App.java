@@ -1,7 +1,5 @@
 package com.orbis;
 
-import com.orbis.exception.annotations.ThrowRuntimeException;
-
 /**
  *
  *pippo
