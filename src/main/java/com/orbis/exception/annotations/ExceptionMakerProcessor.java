@@ -15,41 +15,38 @@ import java.util.Arrays;
 import java.util.Set;
 
 @AutoService(Processor.class)
-@SupportedAnnotationTypes("com.orbis.exception.annotations.ThrowRuntimeException")
+@SupportedAnnotationTypes("com.orbis.exception.annotations.ExceptionMaker")
 @SupportedSourceVersion(SourceVersion.RELEASE_23)
 public class ExceptionMakerProcessor extends AbstractProcessor {
     @Override
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
         TypeElement packagePlusInterfaceName;
         ExceptionMaker exceptionMaker;
-        String exceptionName;
+        String exceptionClassName;
         String packageName;
         Set<? extends Element> annotatedElementsWithThrowRuntimeException = roundEnv.getElementsAnnotatedWith(ExceptionMaker.class);
-
-//        processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE,
-//                "annotatedElementsWithThrowRuntimeException " + annotatedElementsWithThrowRuntimeException );
 
         for (Element element : annotatedElementsWithThrowRuntimeException) {
 
             if (element.getKind() != ElementKind.INTERFACE)
                 continue;
-
-            packagePlusInterfaceName = (TypeElement) element; // Package where user created the interface with the annotation
+            // Package where user created the interface with the annotation
+            packagePlusInterfaceName = (TypeElement) element;
             exceptionMaker = packagePlusInterfaceName.getAnnotation(ExceptionMaker.class);
             packageName = processingEnv.getElementUtils()
                     .getPackageOf(packagePlusInterfaceName)
                     .getQualifiedName()
                     .toString();
 
-            exceptionName = exceptionMaker.nameException();
+            exceptionClassName = exceptionMaker.className();
             processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE,
-                    "Exceptions generated from: " + packageName + "." + exceptionName);
+                    "Exceptions generated from: " + packageName + "." + exceptionClassName);
 
             processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE,
                     "Annotations taken: " + packagePlusInterfaceName + " the row= throwRuntimeException:" + exceptionMaker);
             try {
-                JavaFileObject file = processingEnv.getFiler().createSourceFile(packageName + "." + exceptionName);
-               writeExceptionsFile(file, packageName, exceptionName);
+                JavaFileObject file = processingEnv.getFiler().createSourceFile(packageName + "." + exceptionClassName);
+               writeExceptionsFile(file, packageName, exceptionClassName);
             } catch (Exception e) {
                 processingEnv.getMessager().printMessage(Diagnostic.Kind.ERROR, "error:"+ e.getLocalizedMessage()+"/t"+ Arrays.toString(e.getStackTrace()));
             }
@@ -57,26 +54,26 @@ public class ExceptionMakerProcessor extends AbstractProcessor {
         return true;
     }
 
-    public void writeExceptionsFile(JavaFileObject javaFileObject, String packageName, String exceptionName){
+    public void writeExceptionsFile(JavaFileObject javaFileObject, String packageName, String exceptionClassName){
 
         try (Writer writer = javaFileObject.openWriter()) {
             writer.write("package " + packageName + ";\n\n");
-            writer.write("public class "+exceptionName + " extends RuntimeException {\n");
+            writer.write("public class "+exceptionClassName + " extends RuntimeException {\n");
             writer.write("    private final Object[] params;\n\n");
 
-            writer.write("    public " + exceptionName+" (String message) {\n");
+            writer.write("    public " + exceptionClassName+" (String message) {\n");
             writer.write("        super(message);\n");
             writer.write("        this.params = null;\n");
             writer.write("    }\n\n");
 
-            writer.write("    public "+exceptionName+"(String message, Object[] params) {\n");
+            writer.write("    public "+exceptionClassName+"(String message, Object[] params) {\n");
             writer.write("        super(message);\n");
             writer.write("        this.params = params;\n");
             writer.write("    }\n");
 
             writer.write("}\n");
         }catch (IOException exception){
-            processingEnv.getMessager().printMessage(Diagnostic.Kind.ERROR,"Error during the writting of the exception "+exceptionName);
+            processingEnv.getMessager().printMessage(Diagnostic.Kind.ERROR,"Error during the writting of the exception "+exceptionClassName);
         }
 
     }
