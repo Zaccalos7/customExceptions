@@ -6,7 +6,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.SOURCE)
-@Target(ElementType.METHOD)
-public @interface RunException {
+@Target(ElementType.TYPE)
+public @interface ExceptionMaker {
     String nameException();
 }

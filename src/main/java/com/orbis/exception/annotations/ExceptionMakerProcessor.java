@@ -17,14 +17,14 @@ import java.util.Set;
 @AutoService(Processor.class)
 @SupportedAnnotationTypes("com.orbis.exception.annotations.ThrowRuntimeException")
 @SupportedSourceVersion(SourceVersion.RELEASE_23)
-public class ThrowRuntimeExceptionProcessor extends AbstractProcessor {
+public class ExceptionMakerProcessor extends AbstractProcessor {
     @Override
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
         TypeElement packagePlusInterfaceName;
-        ThrowRuntimeException throwRuntimeException;
+        ExceptionMaker exceptionMaker;
         String exceptionName;
         String packageName;
-        Set<? extends Element> annotatedElementsWithThrowRuntimeException = roundEnv.getElementsAnnotatedWith(ThrowRuntimeException.class);
+        Set<? extends Element> annotatedElementsWithThrowRuntimeException = roundEnv.getElementsAnnotatedWith(ExceptionMaker.class);
 
 //        processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE,
 //                "annotatedElementsWithThrowRuntimeException " + annotatedElementsWithThrowRuntimeException );
@@ -35,18 +35,18 @@ public class ThrowRuntimeExceptionProcessor extends AbstractProcessor {
                 continue;
 
             packagePlusInterfaceName = (TypeElement) element; // Package where user created the interface with the annotation
-            throwRuntimeException = packagePlusInterfaceName.getAnnotation(ThrowRuntimeException.class);
+            exceptionMaker = packagePlusInterfaceName.getAnnotation(ExceptionMaker.class);
             packageName = processingEnv.getElementUtils()
                     .getPackageOf(packagePlusInterfaceName)
                     .getQualifiedName()
                     .toString();
 
-            exceptionName = throwRuntimeException.nameException();
+            exceptionName = exceptionMaker.nameException();
             processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE,
-                    "Genero eccezione: " + packageName + "." + exceptionName);
+                    "Exceptions generated from: " + packageName + "." + exceptionName);
 
             processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE,
-                    "Prendo l'annotazione da: " + packagePlusInterfaceName + " la riga= throwRuntimeException:" + throwRuntimeException);
+                    "Annotations taken: " + packagePlusInterfaceName + " the row= throwRuntimeException:" + exceptionMaker);
             try {
                 JavaFileObject file = processingEnv.getFiler().createSourceFile(packageName + "." + exceptionName);
                writeExceptionsFile(file, packageName, exceptionName);
