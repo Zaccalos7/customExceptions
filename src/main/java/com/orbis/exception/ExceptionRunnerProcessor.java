@@ -77,7 +77,7 @@ public class ExceptionRunnerProcessor extends AbstractProcessor {
 				processingEnv
 						.getMessager()
 						.printMessage(
-								Diagnostic.Kind.ERROR, "error:" + e.getLocalizedMessage() + "/t" + Arrays.toString(e.getStackTrace()));
+								Diagnostic.Kind.ERROR, "error:" + e.getLocalizedMessage() + "\t" + Arrays.toString(e.getStackTrace()));
 			}
 		}
 		return true;
@@ -117,7 +117,7 @@ public class ExceptionRunnerProcessor extends AbstractProcessor {
 		try (Writer writer = javaFileObject.openWriter()) {
 			writer.write("package " + packageName + ";\n\n");
 			writer.write("import " + packageName + "." + exceptionNameClass + ";\n\n");
-			writer.write("import org.springframework.stereotype.Component;");
+			writer.write("import org.springframework.stereotype.Component;\n");
 
 
 			writer.write(componentModel.equalsIgnoreCase("no spring") ? "": "@Component\n");
