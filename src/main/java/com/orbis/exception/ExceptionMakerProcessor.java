@@ -44,7 +44,7 @@ public class ExceptionMakerProcessor extends AbstractProcessor {
 					.printMessage(Diagnostic.Kind.NOTE, "Exceptions generated from: " + packageName + "." + exceptionClassName);
 
 			processingEnv.getMessager()
-					.printMessage(Diagnostic.Kind.NOTE, "Annotations taken: " + packagePlusInterfaceName + " the row= throwRuntimeException:" + exceptionMaker);
+					.printMessage(Diagnostic.Kind.NOTE, "Annotations taken: " + packagePlusInterfaceName + " the row= ExceptionMaker:" + exceptionMaker);
 			try {
 				JavaFileObject file = processingEnv.getFiler().createSourceFile(packageName + "." + exceptionClassName);
 				writeExceptionsFile(file, packageName, exceptionClassName);
