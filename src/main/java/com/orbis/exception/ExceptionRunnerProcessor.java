@@ -1,6 +1,7 @@
-package com.orbis.exception.annotations;
+package com.orbis.exception;
 
 import com.google.auto.service.AutoService;
+import com.orbis.exception.annotations.ExceptionRunner;
 
 import javax.annotation.processing.*;
 import javax.lang.model.SourceVersion;
