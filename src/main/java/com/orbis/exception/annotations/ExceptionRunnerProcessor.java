@@ -42,6 +42,8 @@ public class ExceptionRunnerProcessor extends AbstractProcessor {
 			returnMethodType = methodElement.getReturnType().toString();
 			methodParameters = methodElement.getParameters();
 
+			String componetModel = methodElement.getAnnotation(ExceptionRunner.class).componentModel();
+
 			for (VariableElement param : methodParameters) {
 				String paramName = param.getSimpleName().toString();
 				String paramType = param.asType().toString();
@@ -56,26 +58,19 @@ public class ExceptionRunnerProcessor extends AbstractProcessor {
 			packageElement = processingEnv.getElementUtils().getPackageOf(enclosingElement);
 			packageName = packageElement.getQualifiedName().toString();
 
-			processingEnv.getMessager()
-					.printMessage(Diagnostic.Kind.NOTE, "Annotated method: " + methodName);
-			processingEnv
-					.getMessager().printMessage(Diagnostic.Kind.NOTE, "Interface's name: " + interfaceName);
-			processingEnv.getMessager()
-					.printMessage(Diagnostic.Kind.NOTE, "Package: " + packageName);
-
-			processingEnv.getMessager()
-					.printMessage(Diagnostic.Kind.NOTE, "Exception class name: " + exceptionNameClass);
+			printerAtCompileTime(methodName, interfaceName, packageName, exceptionNameClass);
 
 			try {
 				JavaFileObject javaFileObject =
 						processingEnv.getFiler().createSourceFile(packageName + "." + interfaceName + "Impl");
-				writeThrowCustomException(
+				writeClassImpl(
 						javaFileObject,
 						methodName,
 						packageName,
 						interfaceName,
 						exceptionNameClass,
 						returnMethodType,
+						componetModel,
 						typeParameters);
 			} catch (Exception e) {
 				processingEnv
@@ -87,21 +82,44 @@ public class ExceptionRunnerProcessor extends AbstractProcessor {
 		return true;
 	}
 
-	public void writeThrowCustomException(
+	public void printerAtCompileTime(
+			String methodName,
+			String interfaceName,
+			String packageName,
+			String exceptionNameClass
+			){
+		processingEnv.getMessager()
+				.printMessage(Diagnostic.Kind.NOTE, "Annotated method: " + methodName);
+		processingEnv
+				.getMessager().printMessage(Diagnostic.Kind.NOTE, "Interface's name: " + interfaceName);
+		processingEnv.getMessager()
+				.printMessage(Diagnostic.Kind.NOTE, "Package: " + packageName);
+
+		processingEnv.getMessager()
+				.printMessage(Diagnostic.Kind.NOTE, "Exception class name: " + exceptionNameClass);
+	}
+
+	public void writeClassImpl(
 			JavaFileObject javaFileObject,
 			String methodName,
 			String packageName,
 			String interfaceName,
 			String exceptionNameClass,
 			String returnMethodType,
+			String componentModel,
 			List<String> typeParameters) {
+
 		String generatedNameClass = interfaceName + "Impl";
 		String methodArguments = String.join(",", typeParameters);
+
 
 		try (Writer writer = javaFileObject.openWriter()) {
 			writer.write("package " + packageName + ";\n\n");
 			writer.write("import " + packageName + "." + exceptionNameClass + ";\n\n");
+			writer.write("import org.springframework.stereotype.Component;");
 
+
+			writer.write(componentModel.equalsIgnoreCase("no spring") ? "": "@Component\n");
 			writer.write("public class " + generatedNameClass + " implements " + interfaceName + " {\n\n");
 
 			writer.write("\t@Override\n");
