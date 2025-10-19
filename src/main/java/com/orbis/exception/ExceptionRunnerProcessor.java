@@ -9,6 +9,7 @@ import javax.lang.model.element.*;
 import javax.tools.Diagnostic;
 import javax.tools.JavaFileObject;
 import java.io.Writer;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -115,6 +116,11 @@ public class ExceptionRunnerProcessor extends AbstractProcessor {
 
 
 		try (Writer writer = javaFileObject.openWriter()) {
+			writer.write("/*\n");
+			writer.write("*\n");
+			writer.write("* Code generated:\n");
+			writer.write("*"+ " "+ LocalDateTime.now() +"\n");
+			writer.write("*/\n");
 			writer.write("package " + packageName + ";\n\n");
 			writer.write("import " + packageName + "." + exceptionNameClass + ";\n\n");
 			writer.write("import org.springframework.stereotype.Component;\n");
