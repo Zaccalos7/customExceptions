@@ -2,6 +2,6 @@ package com.orbis.myUsage;
 
 import com.orbis.exception.annotations.ExceptionMaker;
 
-@ExceptionMaker(className = "MyUsageExceptions")
+@ExceptionMaker(classesName = {"PippoException"})
 public interface MyUsageInterface {
 }
