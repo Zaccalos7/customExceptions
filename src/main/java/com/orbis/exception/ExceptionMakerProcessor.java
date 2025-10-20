@@ -12,7 +12,10 @@ import javax.tools.Diagnostic;
 import javax.tools.JavaFileObject;
 import java.io.IOException;
 import java.io.Writer;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.Set;
 
 @AutoService(Processor.class)
@@ -58,6 +61,11 @@ public class ExceptionMakerProcessor extends AbstractProcessor {
 	public void writeExceptionsFile(JavaFileObject javaFileObject, String packageName, String exceptionClassName) {
 
 		try (Writer writer = javaFileObject.openWriter()) {
+			writer.write("/*\n");
+			writer.write("*\n");
+			writer.write("* Code generated:\n");
+			writer.write("*"+ " "+ LocalDateTime.now() +"\n");
+			writer.write("*/\n");
 			writer.write("package " + packageName + ";\n\n");
 			writer.write("public class " + exceptionClassName + " extends RuntimeException {\n");
 			writer.write("    private final Object[] params;\n\n");
