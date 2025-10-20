@@ -137,7 +137,7 @@ public class ExceptionRunnerProcessor extends AbstractProcessor {
 
             writer.write("\t@Override\n");
             writer.write("    public " + returnMethodType + " " + methodName + "(" + methodArguments + ")" + " {\n");
-            writer.write("        throw new CustomException(" + variableList + ");\n");
+            writer.write("        throw new "+exceptionNameClass+"(" + variableList + ");\n");
             writer.write("    }\n\n");
 
             writer.write("}\n");
