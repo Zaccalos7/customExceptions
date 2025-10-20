@@ -9,5 +9,5 @@ import java.lang.annotation.Target;
 @Target(ElementType.METHOD)
 public @interface ExceptionRunner {
     String exceptionMethod();
-    String componentModel() default "no spring";
+    String componentModel() default "spring";
 }
