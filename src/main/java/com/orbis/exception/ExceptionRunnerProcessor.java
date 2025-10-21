@@ -91,7 +91,7 @@ public class ExceptionRunnerProcessor extends AbstractProcessor {
             writer.write("*/\n");
             writer.write("package " + packageName + ";\n\n");
 
-            writeImportsImpl(writer, packageName, validAnnotations, interfaceName);
+            writeImportsAndClassImpl(writer, packageName, validAnnotations, interfaceName);
 
             writerRunnerMethodsExceptionsImpl(writer, validAnnotations);
 
@@ -102,7 +102,7 @@ public class ExceptionRunnerProcessor extends AbstractProcessor {
     }
 
 
-    private void writeImportsImpl(Writer writer, String packageName, List<Element> validAnnotations, String interfaceName) throws IOException {
+    private void writeImportsAndClassImpl(Writer writer, String packageName, List<Element> validAnnotations, String interfaceName) throws IOException {
 
         String exceptionNameClass;
         String componetModel;
