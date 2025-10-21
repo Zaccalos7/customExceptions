@@ -166,6 +166,7 @@ public class ExceptionRunnerProcessor extends AbstractProcessor {
             runnerMethodTypesException.setVariableList(variableList);
 
             runnerMethodTypesExceptionList.add(runnerMethodTypesException);
+            runnerMethodTypesException = new RunnerMethodTypesException();
         }
         return runnerMethodTypesExceptionList;
     }
