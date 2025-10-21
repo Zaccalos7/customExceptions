@@ -93,7 +93,7 @@ public class ExceptionRunnerProcessor extends AbstractProcessor {
 
             writeImportsImpl(writer, packageName, validAnnotations, interfaceName);
 
-            writerRunnerMethodsExceptions(writer, validAnnotations);
+            writerRunnerMethodsExceptionsImpl(writer, validAnnotations);
 
             writer.write("}\n");
         } catch (Exception e) {
@@ -121,7 +121,7 @@ public class ExceptionRunnerProcessor extends AbstractProcessor {
         writer.write("public class " + generatedNameClass + " implements " + interfaceName + " {\n\n");
     }
 
-    private void writerRunnerMethodsExceptions(Writer writer, List<Element> validAnnotations) throws IOException {
+    private void writerRunnerMethodsExceptionsImpl(Writer writer, List<Element> validAnnotations) throws IOException {
 
         List<RunnerMethodTypesException> runnerList = createListForMakeExceptionRunnerMethods(validAnnotations);
 
