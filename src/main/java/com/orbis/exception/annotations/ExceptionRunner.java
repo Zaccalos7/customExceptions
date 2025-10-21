@@ -8,6 +8,6 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.SOURCE)
 @Target(ElementType.METHOD)
 public @interface ExceptionRunner {
-    String exceptionMethod();
+    String exceptionClass();
     String componentModel() default "spring";
 }

@@ -113,7 +113,7 @@ public class ExceptionRunnerProcessor extends AbstractProcessor {
         writer.write("import org.springframework.stereotype.Component;\n");
         for (Element element : validAnnotations) {
             methodElement = (ExecutableElement) element;
-            exceptionNameClass = methodElement.getAnnotation(ExceptionRunner.class).exceptionMethod();
+            exceptionNameClass = methodElement.getAnnotation(ExceptionRunner.class).exceptionClass();
             componetModel = methodElement.getAnnotation(ExceptionRunner.class).componentModel(); //for jakarta in the future
             writer.write("import " + packageName + "." + exceptionNameClass + ";\n\n");
         }
@@ -156,7 +156,7 @@ public class ExceptionRunnerProcessor extends AbstractProcessor {
 
             runnerMethodTypesException.setMethodArguments(String.join(",", typeParameters));
 
-            exceptionNameClass = methodElement.getAnnotation(ExceptionRunner.class).exceptionMethod();
+            exceptionNameClass = methodElement.getAnnotation(ExceptionRunner.class).exceptionClass();
             runnerMethodTypesException.setExceptionNameClass(exceptionNameClass);
 
             variableList = typeParameters.stream()
