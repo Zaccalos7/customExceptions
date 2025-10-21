@@ -1,38 +1,11 @@
 package com.orbis.type;
 
 public class RunnerMethodTypesException {
-    private String componentModel;
-    private String generatedNameClass;
-    private String interfaceName;
     private String returnMethodType;
     private String methodName;
     private String methodArguments;
     private String exceptionNameClass;
     private String variableList;
-
-    public String getComponentModel() {
-        return componentModel;
-    }
-
-    public void setComponentModel(String componentModel) {
-        this.componentModel = componentModel;
-    }
-
-    public String getGeneratedNameClass() {
-        return generatedNameClass;
-    }
-
-    public void setGeneratedNameClass(String generatedNameClass) {
-        this.generatedNameClass = generatedNameClass;
-    }
-
-    public String getInterfaceName() {
-        return interfaceName;
-    }
-
-    public void setInterfaceName(String interfaceName) {
-        this.interfaceName = interfaceName;
-    }
 
     public String getReturnMethodType() {
         return returnMethodType;
