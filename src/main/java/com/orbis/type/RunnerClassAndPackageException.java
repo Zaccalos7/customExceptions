@@ -1,10 +1,10 @@
 package com.orbis.type;
 
-public class RunnerClassAndImportsException {
+public class RunnerClassAndPackageException {
     String packageName;
     String interfaceName;
 
-    public RunnerClassAndImportsException(String packageName, String interfaceName) {
+    public RunnerClassAndPackageException(String packageName, String interfaceName) {
         this.packageName = packageName;
         this.interfaceName = interfaceName;
     }
