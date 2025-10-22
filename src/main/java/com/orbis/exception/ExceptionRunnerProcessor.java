@@ -29,7 +29,7 @@ public class ExceptionRunnerProcessor extends AbstractProcessor {
         Set<? extends Element> annotatedElementWithRunException = roundEnvironment.getElementsAnnotatedWith(ExceptionRunner.class);
 
         List<Element> validAnnotations = getValidAnnotations(annotatedElementWithRunException);
-        if(validAnnotations.isEmpty()){
+        if (validAnnotations.isEmpty()) {
             return false;
         }
         Element validAnnotatio = validAnnotations.get(0);
@@ -110,13 +110,24 @@ public class ExceptionRunnerProcessor extends AbstractProcessor {
         ExecutableElement methodElement;
         String generatedNameClass = interfaceName + "Impl";
 
+        List<Boolean> componentModelEqualsSpringList = new ArrayList<>();
+
         writer.write("import org.springframework.stereotype.Component;\n");
         for (Element element : validAnnotations) {
             methodElement = (ExecutableElement) element;
             exceptionNameClass = methodElement.getAnnotation(ExceptionRunner.class).exceptionClass();
-            componetModel = methodElement.getAnnotation(ExceptionRunner.class).componentModel(); //for jakarta in the future
+            componetModel = methodElement.getAnnotation(ExceptionRunner.class).componentModel();
+            if (componetModel.equalsIgnoreCase("spring")) {
+                componentModelEqualsSpringList.add(true);
+            }
             writer.write("import " + packageName + "." + exceptionNameClass + ";\n\n");
         }
+        if (componentModelEqualsSpringList.size() != validAnnotations.size()) {
+            processingEnv.getMessager()
+                    .printMessage(Diagnostic.Kind.ERROR, "All @ExceptionRunner in the same interface, must contains the same componentModel");
+            return;
+        }
+
         writer.write("@Component\n");
         writer.write("public class " + generatedNameClass + " implements " + interfaceName + " {\n\n");
     }
@@ -125,7 +136,7 @@ public class ExceptionRunnerProcessor extends AbstractProcessor {
 
         List<RunnerMethodTypesException> runnerList = createListForMakeExceptionRunnerMethods(validAnnotations);
 
-        for(RunnerMethodTypesException runnerMethod: runnerList){
+        for (RunnerMethodTypesException runnerMethod : runnerList) {
             writer.write("\t@Override\n");
             writer.write("    public " + runnerMethod.getReturnMethodType() + " " + runnerMethod.getMethodName() + "(" + runnerMethod.getMethodArguments() + ")"
                     + " {\n");
