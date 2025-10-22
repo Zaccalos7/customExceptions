@@ -119,15 +119,19 @@ public class ExceptionRunnerProcessor extends AbstractProcessor {
             componetModel = methodElement.getAnnotation(ExceptionRunner.class).componentModel();
             if (componetModel.equalsIgnoreCase("spring")) {
                 componentModelEqualsSpringList.add(true);
+            }else{
+                componentModelEqualsSpringList.add(false);
             }
             writer.write("import " + packageName + "." + exceptionNameClass + ";\n\n");
         }
-        if (componentModelEqualsSpringList.size() != validAnnotations.size()) {
+        boolean hasSpring = componentModelEqualsSpringList.stream().allMatch(Boolean::booleanValue);
+        if (!hasSpring) {
             processingEnv.getMessager()
                     .printMessage(Diagnostic.Kind.ERROR, "All @ExceptionRunner in the same interface, must contains the same componentModel");
             return;
         }
 
+        writer.write("import org.springframework.stereotype.Component;\n");
         writer.write("@Component\n");
         writer.write("public class " + generatedNameClass + " implements " + interfaceName + " {\n\n");
     }
