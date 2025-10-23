@@ -18,6 +18,18 @@
         </license>
     </licenses>
 
+    <developers>
+        <developer>
+            <id>jdoe</id>
+            <name>Marco Guarino</name>
+            <email>guarimar@libero.it</email>
+            <roles>
+                <role>Lead Developer</role>
+            </roles>
+            <timezone>+1</timezone>
+        </developer>
+    </developers>     
+
 <!--    <scm>-->
 <!--        <url>https://svn.apache.org/viewvc/maven</url>-->
 <!--    </scm>-->
