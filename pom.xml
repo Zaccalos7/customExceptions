@@ -2,7 +2,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.orbis</groupId>
+    <groupId>io.github.zaccalos7</groupId>
     <artifactId>customExceptions</artifactId>
     <version>1.0.0</version>
     <packaging>jar</packaging>
@@ -30,9 +30,11 @@
         </developer>
     </developers>
 
-    <!--    <scm>-->
-    <!--        <url>https://svn.apache.org/viewvc/maven</url>-->
-    <!--    </scm>-->
+    <scm>
+        <connection>scm:git:git://github.com/Zaccalos7/customExceptions.git</connection>
+        <developerConnection>scm:git:ssh://github.com/Zaccalos7/customExceptions.git</developerConnection>
+        <url>https://github.com/Zaccalos7/customExceptions</url>
+    </scm>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
