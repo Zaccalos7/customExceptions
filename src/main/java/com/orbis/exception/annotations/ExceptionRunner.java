@@ -10,19 +10,19 @@ import java.lang.annotation.Target;
  * entry point to be implemented automatically.
  *
  * <p>This annotation must be placed <b>above the method signature</b> 
- * within an interface that is itself annotated with {@code @ExceptionMaker}.
+ * within an interface that is itself annotated with {@link ExceptionMaker}.
  * During code generation, implementation methods will be created based
  * on these annotated method signatures.</p>
  *
- * <p>The {@code exceptionClass} parameter defines which exception type 
- * should be handled, while the {@code componentModel} parameter specifies 
+ * <p>The {@code exceptionClass} parameter defines which exception type
+ * should be handled, while the {@code componentModel} parameter specifies
  * the target component model used for code generation.</p>
  *
- * <p><b>Note:</b> The annotation is retained only in the source code 
- * (RetentionPolicy.SOURCE) and can be applied to methods only.</p>
- *
- * @Retention {@link RetentionPolicy#SOURCE} — discarded after compilation
- * @Target {@link ElementType#METHOD} — applicable to methods only
+ * <p><b>Note:</b>
+ * Retention policy: {@link java.lang.annotation.RetentionPolicy#SOURCE}
+ * (discarded after compilation).<br>
+ * Target: {@link java.lang.annotation.ElementType#METHOD}
+ * (applicable to methods only).</p>
  *
  * @see java.lang.annotation.Retention
  * @see java.lang.annotation.Target
@@ -31,16 +31,24 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.SOURCE)
 @Target(ElementType.METHOD)
 public @interface ExceptionRunner {
+
     /**
-    * @return the exception class name to handle
-    * 
-    * example
-    * exceptionClass = "ExampleException"
-    */
+     * Defines the exception class name to handle.
+     *
+     * <p>Example:</p>
+     * <pre>
+     * {@code exceptionClass = "ExampleException"}
+     * </pre>
+     *
+     * @return the exception class name to handle
+     */
     String exceptionClass();
+
     /**
-    *@return the component model type
-    *
-    */
+     * Specifies the component model type used for code generation.
+     *
+     * @return the component model type
+     */
     String componentModel() default "default";
 }
+
