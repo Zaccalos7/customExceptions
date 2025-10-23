@@ -20,6 +20,14 @@ import java.util.Set;
 @SupportedAnnotationTypes("com.orbis.exception.annotations.ExceptionMaker")
 @SupportedSourceVersion(SourceVersion.RELEASE_23)
 public class ExceptionMakerProcessor extends AbstractProcessor {
+
+    /**
+     * Processes all elements annotated with {@link ExceptionMaker}.
+     *
+     * @param annotations the set of annotation types requested to be processed
+     * @param roundEnv    environment for information about the current and prior round
+     * @return {@code true} if the annotations are claimed by this processor
+     */
     @Override
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
         TypeElement packagePlusInterfaceName;
@@ -60,6 +68,13 @@ public class ExceptionMakerProcessor extends AbstractProcessor {
         return true;
     }
 
+    /**
+     * Write the exceptions class
+     *
+     * @param javaFileObject java file to generate
+     * @param packageName the package where user used the annotations
+     * @param exceptionClassName exception custom name
+     */
     public void writeExceptionsFile(JavaFileObject javaFileObject, String packageName, String exceptionClassName) {
 
         try (Writer writer = javaFileObject.openWriter()) {
