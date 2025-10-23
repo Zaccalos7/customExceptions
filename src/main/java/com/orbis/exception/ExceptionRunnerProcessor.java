@@ -23,6 +23,18 @@ import java.util.stream.Collectors;
 @SupportedAnnotationTypes("com.orbis.exception.annotations.ExceptionRunner")
 @SupportedSourceVersion(SourceVersion.RELEASE_23)
 public class ExceptionRunnerProcessor extends AbstractProcessor {
+    /**
+     * Processes all elements annotated with {@link ExceptionRunner}.
+     *
+     * <p>This method is invoked by the annotation processing framework during
+     * compilation. It scans the source code for methods annotated with
+     * {@link ExceptionRunner}, validates them, and generates an implementation
+     * class that wires together the exception-handling logic.</p>
+     * @param annotations   the set of annotation types requested to be processed
+     * @param roundEnvironment environment for information about the current and prior round
+     * @return {@code true} if the annotations are claimed by this processor,
+     *         {@code false} otherwise
+     */
     @Override
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnvironment) {
 
@@ -58,6 +70,11 @@ public class ExceptionRunnerProcessor extends AbstractProcessor {
     }
 
 
+    /**
+     * Filters and collects the elements annotated with {@link ExceptionRunner}.
+     * @param annotatedElementWithRunException the set of elements annotated with {@link ExceptionRunner}
+     * @return a list containing all valid annotated elements (currently identical to the input set)
+     */
     private List<Element> getValidAnnotations(Set<? extends Element> annotatedElementWithRunException) {
         List<Element> elements = new ArrayList<>();
         for (Element element : annotatedElementWithRunException) {
@@ -66,6 +83,13 @@ public class ExceptionRunnerProcessor extends AbstractProcessor {
         return elements;
     }
 
+    /**
+     * Extracts package and interface information from a method
+     * annotated with {@link ExceptionRunner}.
+     *
+     * @param validAnnotation the annotated method element
+     * @return a container with package and interface name
+     */
     private RunnerClassAndPackageException getClassAndImport(Element validAnnotation) {
         ExecutableElement methodElement = (ExecutableElement) validAnnotation;
         String methodName = methodElement.getSimpleName().toString();
@@ -82,6 +106,22 @@ public class ExceptionRunnerProcessor extends AbstractProcessor {
         return new RunnerClassAndPackageException(packageName, interfaceName);
     }
 
+    /**
+     * Generates the implementation class source file for an interface
+     * annotated with {@link ExceptionRunner}.
+     *
+     * <p>This method writes the package declaration, class header,
+     * and all method implementations derived from the annotated
+     * elements. It delegates the details of imports/class definition
+     * to {@code writeImportsAndClassImpl(...)} and the method bodies
+     * to {@code writerRunnerMethodsExceptionsImpl(...)}.</p>
+     *
+     * @param javaFileObject the target source file to write
+     * @param packageName    the package where the implementation will be generated
+     * @param interfaceName  the name of the annotated interface
+     * @param validAnnotations the list of valid annotated elements to process
+     * @throws RuntimeException if an error occurs while writing the file
+     */
     private void writePackageImpl(JavaFileObject javaFileObject, String packageName, String interfaceName, List<Element> validAnnotations) {
         try (Writer writer = javaFileObject.openWriter()) {
             writer.write("/*\n");
@@ -102,6 +142,24 @@ public class ExceptionRunnerProcessor extends AbstractProcessor {
     }
 
 
+    /**
+     * Writes the import statements and the class declaration for the generated
+     * implementation of an interface annotated with {@link ExceptionRunner}.
+     *
+     * <p>For each annotated method, this method imports the corresponding
+     * exception class. It also checks that all methods within the same
+     * interface declare the same {@code componentModel}. If the models differ,
+     * a compilation error is reported.</p>
+     *
+     * <p>If the component model is {@code spring}, the generated class is
+     * annotated with  org.springframework.stereotype.Component.</p>
+     *
+     * @param writer          the writer used to output the generated source
+     * @param packageName     the package of the generated class
+     * @param validAnnotations the list of annotated methods to process
+     * @param interfaceName   the name of the interface being implemented
+     * @throws IOException if an error occurs while writing to the file
+     */
     private void writeImportsAndClassImpl(Writer writer, String packageName, List<Element> validAnnotations, String interfaceName) throws IOException {
 
         String exceptionNameClass;
@@ -136,6 +194,18 @@ public class ExceptionRunnerProcessor extends AbstractProcessor {
         writer.write("public class " + generatedNameClass + " implements " + interfaceName + " {\n\n");
     }
 
+    /**
+     * Writes the method implementations for all {@link ExceptionRunner}-annotated
+     * methods in the generated class.
+     *
+     * <p>For each annotated method, this method generates an overriding method
+     * that immediately throws the corresponding exception defined in the
+     * {@link ExceptionRunner} annotation.</p>
+     *
+     * @param writer           the writer used to output the generated source
+     * @param validAnnotations the list of annotated method elements to process
+     * @throws IOException if an error occurs while writing to the file
+     */
     private void writerRunnerMethodsExceptionsImpl(Writer writer, List<Element> validAnnotations) throws IOException {
 
         List<RunnerMethodTypesException> runnerList = createListForMakeExceptionRunnerMethods(validAnnotations);
@@ -149,6 +219,26 @@ public class ExceptionRunnerProcessor extends AbstractProcessor {
         }
     }
 
+    /**
+     * Builds a list of {@link RunnerMethodTypesException} objects from the
+     * methods annotated with {@link ExceptionRunner}.
+     *
+     * <p>For each annotated method, this method extracts:</p>
+     * <ul>
+     *   <li>the return type</li>
+     *   <li>the method name</li>
+     *   <li>the full method arguments (types and names)</li>
+     *   <li>the exception class name declared in {@link ExceptionRunner#exceptionClass()}</li>
+     *   <li>the variable list (only parameter names, comma-separated)</li>
+     * </ul>
+     *
+     * <p>Each set of extracted values is stored in a new
+     * {@link RunnerMethodTypesException} instance, which is then added
+     * to the result list.</p>
+     *
+     * @param validAnnotations the list of method elements annotated with {@link ExceptionRunner}
+     * @return a list of {@link RunnerMethodTypesException} containing metadata for code generation
+     */
     private List<RunnerMethodTypesException> createListForMakeExceptionRunnerMethods(List<Element> validAnnotations) {
         List<RunnerMethodTypesException> runnerMethodTypesExceptionList = new ArrayList<>();
         RunnerMethodTypesException runnerMethodTypesException = new RunnerMethodTypesException();
@@ -186,6 +276,17 @@ public class ExceptionRunnerProcessor extends AbstractProcessor {
         return runnerMethodTypesExceptionList;
     }
 
+    /**
+     * Builds a list of method parameter signatures from the given elements.
+     *
+     * <p>Each parameter is represented as a string in the form
+     * {@code "<type> <name>"}, preserving both its type and variable name.
+     * This list is later used to reconstruct method signatures in the
+     * generated implementation.</p>
+     *
+     * @param methodParameters the list of method parameters to process
+     * @return a list of strings, each containing the type and name of a parameter
+     */
     private List<String> getTypesAndMethodParametersAndConcatenatesThem(List<? extends VariableElement> methodParameters) {
         List<String> typeParameters = new ArrayList<>();
         for (VariableElement param : methodParameters) {
@@ -196,6 +297,17 @@ public class ExceptionRunnerProcessor extends AbstractProcessor {
         return typeParameters;
     }
 
+    /**
+     * Prints diagnostic information at compile time about the annotated element.
+     *
+     * <p>This method logs the method name, the enclosing interface name,
+     * and the package name to the compiler's messager with {@link Diagnostic.Kind#NOTE} level.
+     * It is mainly used for debugging and tracking during annotation processing.</p>
+     *
+     * @param methodName    the name of the annotated method
+     * @param interfaceName the name of the enclosing interface
+     * @param packageName   the package where the interface is declared
+     */
     public void printerAtCompileTime(
             String methodName,
             String interfaceName,
