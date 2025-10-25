@@ -21,6 +21,7 @@ import java.util.Set;
 @SupportedSourceVersion(SourceVersion.RELEASE_23)
 public class ExceptionMakerProcessor extends AbstractProcessor {
 
+
     /**
      * Processes all elements annotated with {@link ExceptionMaker}.
      *
