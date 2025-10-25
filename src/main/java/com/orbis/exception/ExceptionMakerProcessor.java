@@ -51,7 +51,7 @@ public class ExceptionMakerProcessor extends AbstractProcessor {
 
             exceptionClassesName = exceptionMaker.classesName();
             processingEnv.getMessager()
-                    .printMessage(Diagnostic.Kind.NOTE, "Exceptions generated from: " + packageName + "." + exceptionClassesName);
+                    .printMessage(Diagnostic.Kind.NOTE, "Making Exceptions from: " + packageName + "." + exceptionClassesName);
 
             processingEnv.getMessager()
                     .printMessage(Diagnostic.Kind.NOTE, "Annotations taken: " + packagePlusInterfaceName + " the row= ExceptionMaker:" + exceptionMaker);
