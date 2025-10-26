@@ -19,6 +19,13 @@ public class RunnerClassAndPackageException {
         this.interfaceName = interfaceName;
     }
 
+    /**
+     * Builder without param
+     */
+    public RunnerClassAndPackageException(){
+
+    }
+
     /** @return the package name */
     public String getPackageName() {
         return packageName;

@@ -3,6 +3,7 @@ package com.orbis.exception;
 import com.google.auto.service.AutoService;
 import com.orbis.exception.annotations.ExceptionRunner;
 import com.orbis.type.RunnerClassAndPackageException;
+import com.orbis.type.RunnerEnvironmentException;
 import com.orbis.type.RunnerMethodTypesException;
 
 import javax.annotation.processing.*;
@@ -13,10 +14,7 @@ import javax.tools.JavaFileObject;
 import java.io.IOException;
 import java.io.Writer;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @AutoService(Processor.class)
@@ -30,10 +28,11 @@ public class ExceptionRunnerProcessor extends AbstractProcessor {
      * compilation. It scans the source code for methods annotated with
      * {@link ExceptionRunner}, validates them, and generates an implementation
      * class that wires together the exception-handling logic.</p>
-     * @param annotations   the set of annotation types requested to be processed
+     *
+     * @param annotations      the set of annotation types requested to be processed
      * @param roundEnvironment environment for information about the current and prior round
      * @return {@code true} if the annotations are claimed by this processor,
-     *         {@code false} otherwise
+     * {@code false} otherwise
      */
     @Override
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnvironment) {
@@ -44,21 +43,33 @@ public class ExceptionRunnerProcessor extends AbstractProcessor {
         if (validAnnotations.isEmpty()) {
             return false;
         }
-        Element validAnnotatio = validAnnotations.get(0);
-        RunnerClassAndPackageException runnerClassAndPackageException = getClassAndImport(validAnnotatio);
+
+        List<List<RunnerEnvironmentException>> groupsOfListsOfElement = collectElementAndTheirPackageAndInterfaceName(validAnnotations);
+
+        HashMap<RunnerClassAndPackageException, List<Element>> classesAndTheirMethodsRegistry = new HashMap<>();
+        classesAndTheirMethodsRegistry = createHashMap(groupsOfListsOfElement);
 
         try {
-            JavaFileObject javaFileObject = processingEnv.getFiler()
-                    .createSourceFile(
-                            runnerClassAndPackageException.getPackageName()
-                                    + "."
-                                    + runnerClassAndPackageException.getInterfaceName()
-                                    + "Impl");
-            writePackageImpl(
-                    javaFileObject,
-                    runnerClassAndPackageException.getPackageName(),
-                    runnerClassAndPackageException.getInterfaceName(),
-                    validAnnotations);
+            JavaFileObject javaFileObject;
+            String packageName;
+            String interfaceName;
+            String packageAndInterface;
+
+            for (Map.Entry<RunnerClassAndPackageException, List<Element>> entryClassesAndTheirMethodsRegistry : classesAndTheirMethodsRegistry.entrySet()) {
+                packageName = entryClassesAndTheirMethodsRegistry.getKey().getPackageName();
+                interfaceName = entryClassesAndTheirMethodsRegistry.getKey().getInterfaceName();
+                packageAndInterface = packageName + "." + interfaceName + "Impl";
+                javaFileObject = processingEnv.getFiler()
+                        .createSourceFile(packageAndInterface);
+                List<Element> methodInClassAnnotatedWithExceptionMaker = entryClassesAndTheirMethodsRegistry.getValue();
+
+                writePackageImpl(javaFileObject,
+                        packageName,
+                        interfaceName,
+                        methodInClassAnnotatedWithExceptionMaker
+                );
+            }
+
         } catch (Exception e) {
             processingEnv
                     .getMessager()
@@ -72,6 +83,7 @@ public class ExceptionRunnerProcessor extends AbstractProcessor {
 
     /**
      * Filters and collects the elements annotated with {@link ExceptionRunner}.
+     *
      * @param annotatedElementWithRunException the set of elements annotated with {@link ExceptionRunner}
      * @return a list containing all valid annotated elements (currently identical to the input set)
      */
@@ -107,6 +119,106 @@ public class ExceptionRunnerProcessor extends AbstractProcessor {
     }
 
     /**
+     * Collects metadata (package, interface, annotated method with @ExceptionRUnner) from the given elements
+     * and groups them by package and interface name.
+     *
+     * @param validAnnotations the list of annotated elements to process
+     * @return a list of groups, where each group contains elements
+     *         belonging to the same package and interface
+     */
+    private List<List<RunnerEnvironmentException>> collectElementAndTheirPackageAndInterfaceName(List<Element> validAnnotations){
+        String packageName;
+        String interfaceName;
+
+        RunnerClassAndPackageException runnerClassAndPackageException;
+        RunnerEnvironmentException runnerEnvironmentException;
+        List<RunnerEnvironmentException> runnerEnvironmentExceptionList = new ArrayList<>();
+
+        for(Element validAnnotation: validAnnotations){
+            runnerEnvironmentException = new RunnerEnvironmentException();
+            runnerClassAndPackageException = getClassAndImport(validAnnotation);
+            packageName = runnerClassAndPackageException.getPackageName();
+            interfaceName = runnerClassAndPackageException.getInterfaceName();
+            runnerEnvironmentException.setPackageName(packageName);
+            runnerEnvironmentException.setInterfaceName(interfaceName);
+            runnerEnvironmentException.setMethodWithValidAnnotation(validAnnotation);
+            runnerEnvironmentExceptionList.add(runnerEnvironmentException);
+        }
+
+        List<List<RunnerEnvironmentException>> groupsOfListsOfElement = groupElementsByPackageNameAndInterfaceName(runnerEnvironmentExceptionList);
+        return groupsOfListsOfElement;
+    }
+
+    /**
+     * Groups the given list of RunnerEnvironmentException by package and interface name.
+     * Each group contains all elements sharing the same package and interface.
+     *
+     * @param runnerEnvironmentExceptionList the list of elements to group
+     * @return a list of groups, where each group is a list of elements
+     *         with identical package and interface names
+     */
+    private List<List<RunnerEnvironmentException>> groupElementsByPackageNameAndInterfaceName(List<RunnerEnvironmentException> runnerEnvironmentExceptionList) {
+        List<List<RunnerEnvironmentException>> groupsOfListsOfElement = new ArrayList<>();
+
+        while (!runnerEnvironmentExceptionList.isEmpty()) {
+
+            RunnerEnvironmentException first = runnerEnvironmentExceptionList.remove(0);
+
+            List<RunnerEnvironmentException> group = new ArrayList<>();
+            group.add(first);
+
+            Iterator<RunnerEnvironmentException> iterator = runnerEnvironmentExceptionList.iterator();
+            while (iterator.hasNext()) {
+                RunnerEnvironmentException current = iterator.next();
+                if (current.getPackageName().equals(first.getPackageName()) &&
+                        current.getInterfaceName().equals(first.getInterfaceName())) {
+                    group.add(current);
+                    iterator.remove();
+                }
+            }
+
+            groupsOfListsOfElement.add(group);
+        }
+        return  groupsOfListsOfElement;
+    }
+
+    /**
+     * Builds a map of RunnerClassAndPackageException to their annotated methods.
+     *
+     * <p>Each group is represented by its first element (because previously grouped by packageName and interfaceName), which provides
+     * the package and interface name used as the key. The value is the list
+     * of annotated elements contained in that group.</p>
+     *
+     * @param groupsOfListsOfElement the grouped elements by package and interface
+     * @return a map where the key is the package/interface pair and the value
+     *         is the list of annotated method elements
+     */
+    private HashMap<RunnerClassAndPackageException, List<Element>> createHashMap(List<List<RunnerEnvironmentException>> groupsOfListsOfElement) {
+        HashMap<RunnerClassAndPackageException, List<Element>> classesAndTheirMethodsRegistry = new HashMap<>();
+
+        for (List<RunnerEnvironmentException> group : groupsOfListsOfElement) {
+            if (group.isEmpty()) continue;
+
+            RunnerEnvironmentException first = group.get(0);
+
+            RunnerClassAndPackageException key = new RunnerClassAndPackageException(
+                    first.getPackageName(),
+                    first.getInterfaceName()
+            );
+
+            List<Element> elements = group.stream()
+                    .map(RunnerEnvironmentException::getMethodWithValidAnnotation)
+                    .collect(Collectors.toList());
+
+            classesAndTheirMethodsRegistry.put(key, elements);
+        }
+
+        return classesAndTheirMethodsRegistry;
+
+    }
+
+
+    /**
      * Generates the implementation class source file for an interface
      * annotated with {@link ExceptionRunner}.
      *
@@ -116,10 +228,10 @@ public class ExceptionRunnerProcessor extends AbstractProcessor {
      * to {@code writeImportsAndClassImpl(...)} and the method bodies
      * to {@code writerRunnerMethodsExceptionsImpl(...)}.</p>
      *
-     * @param javaFileObject the target source file to write
-     * @param packageName    the package where the implementation will be generated
-     * @param interfaceName  the name of the annotated interface
-     * @param validAnnotations the list of valid annotated elements to process
+     * @param javaFileObject   the target source file to write
+     * @param packageName      the package where the implementation will be generated
+     * @param interfaceName    the name of the annotated interface
+     * @param validAnnotations the element annotated  with @ExceptionRunner
      * @throws RuntimeException if an error occurs while writing the file
      */
     private void writePackageImpl(JavaFileObject javaFileObject, String packageName, String interfaceName, List<Element> validAnnotations) {
@@ -154,10 +266,10 @@ public class ExceptionRunnerProcessor extends AbstractProcessor {
      * <p>If the component model is {@code spring}, the generated class is
      * annotated with  org.springframework.stereotype.Component.</p>
      *
-     * @param writer          the writer used to output the generated source
-     * @param packageName     the package of the generated class
-     * @param validAnnotations the list of annotated methods to process
-     * @param interfaceName   the name of the interface being implemented
+     * @param writer           the writer used to output the generated source
+     * @param packageName      the package of the generated class
+     * @param validAnnotations method to process
+     * @param interfaceName    the name of the interface being implemented
      * @throws IOException if an error occurs while writing to the file
      */
     private void writeImportsAndClassImpl(Writer writer, String packageName, List<Element> validAnnotations, String interfaceName) throws IOException {
@@ -171,22 +283,23 @@ public class ExceptionRunnerProcessor extends AbstractProcessor {
         List<Boolean> componentModelEqualsSpringList = new ArrayList<>();
 
         writer.write("import org.springframework.stereotype.Component;\n");
-        for (Element element : validAnnotations) {
-            methodElement = (ExecutableElement) element;
+        for (Element validAnnotation : validAnnotations) {
+            methodElement = (ExecutableElement) validAnnotation;
             exceptionNameClass = methodElement.getAnnotation(ExceptionRunner.class).exceptionClass();
             componetModel = methodElement.getAnnotation(ExceptionRunner.class).componentModel();
             if (componetModel.equalsIgnoreCase("spring")) {
                 componentModelEqualsSpringList.add(true);
-            }else{
+            } else {
                 componentModelEqualsSpringList.add(false);
             }
             writer.write("import " + packageName + "." + exceptionNameClass + ";\n\n");
-        }
-        boolean hasSpring = componentModelEqualsSpringList.stream().allMatch(Boolean::booleanValue);
-        if (!hasSpring) {
-            processingEnv.getMessager()
-                    .printMessage(Diagnostic.Kind.ERROR, "All @ExceptionRunner in the same interface, must contains the same componentModel");
-            return;
+
+            boolean hasSpring = componentModelEqualsSpringList.stream().allMatch(Boolean::booleanValue);
+            if (!hasSpring) {
+                processingEnv.getMessager()
+                        .printMessage(Diagnostic.Kind.ERROR, "All @ExceptionRunner in the same interface, must contains the same componentModel");
+                return;
+            }
         }
 
         writer.write("import org.springframework.stereotype.Component;\n");
@@ -203,20 +316,21 @@ public class ExceptionRunnerProcessor extends AbstractProcessor {
      * {@link ExceptionRunner} annotation.</p>
      *
      * @param writer           the writer used to output the generated source
-     * @param validAnnotations the list of annotated method elements to process
+     * @param validAnnotations method elements to process
      * @throws IOException if an error occurs while writing to the file
      */
     private void writerRunnerMethodsExceptionsImpl(Writer writer, List<Element> validAnnotations) throws IOException {
 
         List<RunnerMethodTypesException> runnerList = createListForMakeExceptionRunnerMethods(validAnnotations);
 
-        for (RunnerMethodTypesException runnerMethod : runnerList) {
+        for (RunnerMethodTypesException runner : runnerList) {
             writer.write("\t@Override\n");
-            writer.write("    public " + runnerMethod.getReturnMethodType() + " " + runnerMethod.getMethodName() + "(" + runnerMethod.getMethodArguments() + ")"
+            writer.write("    public " + runner.getReturnMethodType() + " " + runner.getMethodName() + "(" + runner.getMethodArguments() + ")"
                     + " {\n");
-            writer.write("        throw new " + runnerMethod.getExceptionNameClass() + "(" + runnerMethod.getVariableList() + ");\n");
+            writer.write("        throw new " + runner.getExceptionNameClass() + "(" + runner.getVariableList() + ");\n");
             writer.write("    }\n\n");
         }
+
     }
 
     /**
@@ -240,18 +354,20 @@ public class ExceptionRunnerProcessor extends AbstractProcessor {
      * @return a list of {@link RunnerMethodTypesException} containing metadata for code generation
      */
     private List<RunnerMethodTypesException> createListForMakeExceptionRunnerMethods(List<Element> validAnnotations) {
-        List<RunnerMethodTypesException> runnerMethodTypesExceptionList = new ArrayList<>();
+
         RunnerMethodTypesException runnerMethodTypesException = new RunnerMethodTypesException();
+        List<RunnerMethodTypesException> runnerMethodTypesExceptionList = new ArrayList<>();
 
         ExecutableElement methodElement;
+
         List<? extends VariableElement> methodParameters;
         List<String> typeParameters;
 
         String exceptionNameClass;
         String variableList;
 
-        for (Element element : validAnnotations) {
-            methodElement = (ExecutableElement) element;
+        for (Element validAnnotation : validAnnotations) {
+            methodElement = (ExecutableElement) validAnnotation;
 
             runnerMethodTypesException.setReturnMethodType(methodElement.getReturnType().toString());
             runnerMethodTypesException.setMethodName(methodElement.getSimpleName().toString());
@@ -269,10 +385,10 @@ public class ExceptionRunnerProcessor extends AbstractProcessor {
                     .collect(Collectors.joining(","));
 
             runnerMethodTypesException.setVariableList(variableList);
-
             runnerMethodTypesExceptionList.add(runnerMethodTypesException);
             runnerMethodTypesException = new RunnerMethodTypesException();
         }
+
         return runnerMethodTypesExceptionList;
     }
 

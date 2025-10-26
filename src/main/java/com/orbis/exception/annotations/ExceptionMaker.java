@@ -44,5 +44,44 @@ public @interface ExceptionMaker {
      * @return the list of exception class names
      */
     String[] classesName();
+
+    /**
+     * Allows the user to define a custom order and number of parameters
+     * for the generated exception constructor.
+     * <p>
+     * Use this when you want to manually specify the order of constructor parameters
+     * or pass a variable number of parameters directly, instead of providing them
+     * inside an {@code Object[]} array (e.g., {@code Object[] params}).
+     * </p>
+     *
+     * <pre>
+     * {@code
+     * @ExceptionMaker(
+     *     classNames = {"UserNotFoundException"},
+     *     enableCustomParameterOrder = true
+     * )
+     * }
+     *
+     * {@code
+     *  Example: new UserNotFoundException("UserID_123", genericList , message, 404);
+     * }
+     * </pre>
+     *
+     * <pre>
+     * {@code
+     * @ExceptionMaker(
+     *     classNames = {"UserNotFoundException"},
+     *     enableCustomParameterOrder = false
+     * )
+     * }
+     *
+     * {@code
+     *  Example: new UserNotFoundException(message, new Object[]{"Not found", 404, genericList});
+     * }
+     * </pre>
+     *
+     * @return true if custom constructor parameter order and count should be enabled
+     */
+    boolean enableCustomParameterOrder() default false;
 }
 
