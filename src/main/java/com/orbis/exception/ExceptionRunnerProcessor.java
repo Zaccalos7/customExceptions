@@ -3,6 +3,7 @@ package com.orbis.exception;
 import com.google.auto.service.AutoService;
 import com.orbis.exception.annotations.ExceptionRunner;
 import com.orbis.type.RunnerClassAndPackageException;
+import com.orbis.type.RunnerEnvironmentException;
 import com.orbis.type.RunnerMethodTypesException;
 
 import javax.annotation.processing.*;
@@ -43,16 +44,10 @@ public class ExceptionRunnerProcessor extends AbstractProcessor {
             return false;
         }
 
-        RunnerClassAndPackageException runnerClassAndPackageExceptionInfo;
+        List<List<RunnerEnvironmentException>> groupsOfListsOfElement = collectElementAndTheirPackageAndInterfaceName(validAnnotations);
 
         HashMap<RunnerClassAndPackageException, List<Element>> classesAndTheirMethodsRegistry = new HashMap<>();
-
-        for (Element validElement : validAnnotations) {
-            runnerClassAndPackageExceptionInfo = getClassAndImport(validElement);
-            classesAndTheirMethodsRegistry
-                    .computeIfAbsent(runnerClassAndPackageExceptionInfo, r -> new ArrayList<>())
-                    .add(validElement);
-        }
+        classesAndTheirMethodsRegistry = createHashMap(groupsOfListsOfElement);
 
         try {
             JavaFileObject javaFileObject;
@@ -122,6 +117,106 @@ public class ExceptionRunnerProcessor extends AbstractProcessor {
 
         return new RunnerClassAndPackageException(packageName, interfaceName);
     }
+
+    /**
+     * Collects metadata (package, interface, annotated method with @ExceptionRUnner) from the given elements
+     * and groups them by package and interface name.
+     *
+     * @param validAnnotations the list of annotated elements to process
+     * @return a list of groups, where each group contains elements
+     *         belonging to the same package and interface
+     */
+    private List<List<RunnerEnvironmentException>> collectElementAndTheirPackageAndInterfaceName(List<Element> validAnnotations){
+        String packageName;
+        String interfaceName;
+
+        RunnerClassAndPackageException runnerClassAndPackageException;
+        RunnerEnvironmentException runnerEnvironmentException;
+        List<RunnerEnvironmentException> runnerEnvironmentExceptionList = new ArrayList<>();
+
+        for(Element validAnnotation: validAnnotations){
+            runnerEnvironmentException = new RunnerEnvironmentException();
+            runnerClassAndPackageException = getClassAndImport(validAnnotation);
+            packageName = runnerClassAndPackageException.getPackageName();
+            interfaceName = runnerClassAndPackageException.getInterfaceName();
+            runnerEnvironmentException.setPackageName(packageName);
+            runnerEnvironmentException.setInterfaceName(interfaceName);
+            runnerEnvironmentException.setMethodWithValidAnnotation(validAnnotation);
+            runnerEnvironmentExceptionList.add(runnerEnvironmentException);
+        }
+
+        List<List<RunnerEnvironmentException>> groupsOfListsOfElement = groupElementsByPackageNameAndInterfaceName(runnerEnvironmentExceptionList);
+        return groupsOfListsOfElement;
+    }
+
+    /**
+     * Groups the given list of RunnerEnvironmentException by package and interface name.
+     * Each group contains all elements sharing the same package and interface.
+     *
+     * @param runnerEnvironmentExceptionList the list of elements to group
+     * @return a list of groups, where each group is a list of elements
+     *         with identical package and interface names
+     */
+    private List<List<RunnerEnvironmentException>> groupElementsByPackageNameAndInterfaceName(List<RunnerEnvironmentException> runnerEnvironmentExceptionList) {
+        List<List<RunnerEnvironmentException>> groupsOfListsOfElement = new ArrayList<>();
+
+        while (!runnerEnvironmentExceptionList.isEmpty()) {
+
+            RunnerEnvironmentException first = runnerEnvironmentExceptionList.remove(0);
+
+            List<RunnerEnvironmentException> group = new ArrayList<>();
+            group.add(first);
+
+            Iterator<RunnerEnvironmentException> iterator = runnerEnvironmentExceptionList.iterator();
+            while (iterator.hasNext()) {
+                RunnerEnvironmentException current = iterator.next();
+                if (current.getPackageName().equals(first.getPackageName()) &&
+                        current.getInterfaceName().equals(first.getInterfaceName())) {
+                    group.add(current);
+                    iterator.remove();
+                }
+            }
+
+            groupsOfListsOfElement.add(group);
+        }
+        return  groupsOfListsOfElement;
+    }
+
+    /**
+     * Builds a map of RunnerClassAndPackageException to their annotated methods.
+     *
+     * <p>Each group is represented by its first element (because previously grouped by packageName and interfaceName), which provides
+     * the package and interface name used as the key. The value is the list
+     * of annotated elements contained in that group.</p>
+     *
+     * @param groupsOfListsOfElement the grouped elements by package and interface
+     * @return a map where the key is the package/interface pair and the value
+     *         is the list of annotated method elements
+     */
+    private HashMap<RunnerClassAndPackageException, List<Element>> createHashMap(List<List<RunnerEnvironmentException>> groupsOfListsOfElement) {
+        HashMap<RunnerClassAndPackageException, List<Element>> classesAndTheirMethodsRegistry = new HashMap<>();
+
+        for (List<RunnerEnvironmentException> group : groupsOfListsOfElement) {
+            if (group.isEmpty()) continue;
+
+            RunnerEnvironmentException first = group.get(0);
+
+            RunnerClassAndPackageException key = new RunnerClassAndPackageException(
+                    first.getPackageName(),
+                    first.getInterfaceName()
+            );
+
+            List<Element> elements = group.stream()
+                    .map(RunnerEnvironmentException::getMethodWithValidAnnotation)
+                    .collect(Collectors.toList());
+
+            classesAndTheirMethodsRegistry.put(key, elements);
+        }
+
+        return classesAndTheirMethodsRegistry;
+
+    }
+
 
     /**
      * Generates the implementation class source file for an interface
