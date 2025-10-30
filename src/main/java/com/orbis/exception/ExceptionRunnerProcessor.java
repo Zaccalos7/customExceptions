@@ -39,7 +39,7 @@ public class ExceptionRunnerProcessor extends AbstractProcessor {
 
         Set<? extends Element> annotatedElementWithRunException = roundEnvironment.getElementsAnnotatedWith(ExceptionRunner.class);
 
-        List<Element> validAnnotations = getValidAnnotations(annotatedElementWithRunException);
+        List<Element> validAnnotations = trasformIntoListOfElements(annotatedElementWithRunException);
         if (validAnnotations.isEmpty()) {
             return false;
         }
@@ -82,17 +82,21 @@ public class ExceptionRunnerProcessor extends AbstractProcessor {
 
 
     /**
-     * Filters and collects the elements annotated with {@link ExceptionRunner}.
+     * Converts a set of elements annotated with {@link ExceptionRunner} into a list.
+     * <p>
+     * This method performs a simple transformation from a {@code Set} to a {@code List},
+     * preserving all elements without applying any filtering or modification.
      *
      * @param annotatedElementWithRunException the set of elements annotated with {@link ExceptionRunner}
-     * @return a list containing all valid annotated elements (currently identical to the input set)
+     * @return a list containing all elements from the input set
      */
-    private List<Element> getValidAnnotations(Set<? extends Element> annotatedElementWithRunException) {
-        List<Element> elements = new ArrayList<>();
-        for (Element element : annotatedElementWithRunException) {
-            elements.add(element);
-        }
-        return elements;
+    private List<Element> trasformIntoListOfElements(Set<? extends Element> annotatedElementWithRunException) {
+        List<Element> elementList = annotatedElementWithRunException
+                .stream()
+                .map(element-> (Element) element)
+                .toList();
+
+        return elementList;
     }
 
     /**
