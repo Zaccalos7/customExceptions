@@ -8,7 +8,9 @@
     <packaging>jar</packaging>
 
     <name>customExceptions</name>
-    <description>library to generete exceptions class e method to handle exceptions</description>
+    <description>
+        Library to generate custom exception classes and methods for structured exception handling.
+    </description>
     <url>http://maven.apache.org</url>
 
     <licenses>
@@ -116,9 +118,9 @@
                         </goals>
                     </execution>
                 </executions>
-                <configuration>
-                    <gpgExecutable>gpg</gpgExecutable>
-                </configuration>
+<!--                <configuration>-->
+<!--                    <gpgExecutable>gpg</gpgExecutable>-->
+<!--                </configuration>-->
             </plugin>
 
             <plugin>
