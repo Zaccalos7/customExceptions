@@ -166,7 +166,7 @@ public class ExceptionRunnerProcessor extends AbstractProcessor {
 
         while (!runnerEnvironmentExceptionList.isEmpty()) {
 
-            RunnerEnvironmentException first = runnerEnvironmentExceptionList.remove(0);
+            RunnerEnvironmentException first = runnerEnvironmentExceptionList.removeFirst();
 
             List<RunnerEnvironmentException> group = new ArrayList<>();
             group.add(first);
@@ -203,7 +203,7 @@ public class ExceptionRunnerProcessor extends AbstractProcessor {
         for (List<RunnerEnvironmentException> group : groupsOfListsOfElement) {
             if (group.isEmpty()) continue;
 
-            RunnerEnvironmentException first = group.get(0);
+            RunnerEnvironmentException first = group.getFirst();
 
             RunnerClassAndPackageException key = new RunnerClassAndPackageException(
                     first.getPackageName(),
