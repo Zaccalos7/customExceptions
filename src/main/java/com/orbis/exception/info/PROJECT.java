@@ -5,7 +5,7 @@ package com.orbis.exception.info;
  * annotations package
  */
 public enum PROJECT {
-    VERSION("1.0.3"),
+    VERSION("1.0.2"),
     PACKAGE("com.orbis.exception.annotations");
 
     private final String value;
