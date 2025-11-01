@@ -4,11 +4,13 @@
 
     <groupId>io.github.zaccalos7</groupId>
     <artifactId>customExceptions</artifactId>
-    <version>1.0.0-beta</version>
+    <version>1.0.2</version>
     <packaging>jar</packaging>
 
     <name>customExceptions</name>
-    <description>library to generete exceptions class e method to handle exceptions</description>
+    <description>
+        Library to generate custom exception classes and methods for structured exception handling.
+    </description>
     <url>http://maven.apache.org</url>
 
     <licenses>
@@ -116,9 +118,9 @@
                         </goals>
                     </execution>
                 </executions>
-                <configuration>
-                    <gpgExecutable>gpg</gpgExecutable>
-                </configuration>
+<!--                <configuration>-->
+<!--                    <gpgExecutable>gpg</gpgExecutable>-->
+<!--                </configuration>-->
             </plugin>
 
             <plugin>

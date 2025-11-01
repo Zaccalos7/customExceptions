@@ -2,6 +2,7 @@ package com.orbis.exception;
 
 import com.google.auto.service.AutoService;
 import com.orbis.exception.annotations.ExceptionRunner;
+import com.orbis.exception.info.PROJECT;
 import com.orbis.type.RunnerClassAndPackageException;
 import com.orbis.type.RunnerEnvironmentException;
 import com.orbis.type.RunnerMethodTypesException;
@@ -14,6 +15,7 @@ import javax.tools.JavaFileObject;
 import java.io.IOException;
 import java.io.Writer;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -39,7 +41,7 @@ public class ExceptionRunnerProcessor extends AbstractProcessor {
 
         Set<? extends Element> annotatedElementWithRunException = roundEnvironment.getElementsAnnotatedWith(ExceptionRunner.class);
 
-        List<Element> validAnnotations = getValidAnnotations(annotatedElementWithRunException);
+        List<Element> validAnnotations = trasformIntoListOfElements(annotatedElementWithRunException);
         if (validAnnotations.isEmpty()) {
             return false;
         }
@@ -82,17 +84,21 @@ public class ExceptionRunnerProcessor extends AbstractProcessor {
 
 
     /**
-     * Filters and collects the elements annotated with {@link ExceptionRunner}.
+     * Converts a set of elements annotated with {@link ExceptionRunner} into a list.
+     * <p>
+     * This method performs a simple transformation from a {@code Set} to a {@code List},
+     * preserving all elements without applying any filtering or modification.
      *
      * @param annotatedElementWithRunException the set of elements annotated with {@link ExceptionRunner}
-     * @return a list containing all valid annotated elements (currently identical to the input set)
+     * @return a list containing all elements from the input set
      */
-    private List<Element> getValidAnnotations(Set<? extends Element> annotatedElementWithRunException) {
-        List<Element> elements = new ArrayList<>();
-        for (Element element : annotatedElementWithRunException) {
-            elements.add(element);
-        }
-        return elements;
+    private List<Element> trasformIntoListOfElements(Set<? extends Element> annotatedElementWithRunException) {
+        List<Element> elementList = annotatedElementWithRunException
+                .stream()
+                .map(element-> (Element) element)
+                .toList();
+
+        return elementList;
     }
 
     /**
@@ -162,7 +168,7 @@ public class ExceptionRunnerProcessor extends AbstractProcessor {
 
         while (!runnerEnvironmentExceptionList.isEmpty()) {
 
-            RunnerEnvironmentException first = runnerEnvironmentExceptionList.remove(0);
+            RunnerEnvironmentException first = runnerEnvironmentExceptionList.removeFirst();
 
             List<RunnerEnvironmentException> group = new ArrayList<>();
             group.add(first);
@@ -199,7 +205,7 @@ public class ExceptionRunnerProcessor extends AbstractProcessor {
         for (List<RunnerEnvironmentException> group : groupsOfListsOfElement) {
             if (group.isEmpty()) continue;
 
-            RunnerEnvironmentException first = group.get(0);
+            RunnerEnvironmentException first = group.getFirst();
 
             RunnerClassAndPackageException key = new RunnerClassAndPackageException(
                     first.getPackageName(),
@@ -236,11 +242,6 @@ public class ExceptionRunnerProcessor extends AbstractProcessor {
      */
     private void writePackageImpl(JavaFileObject javaFileObject, String packageName, String interfaceName, List<Element> validAnnotations) {
         try (Writer writer = javaFileObject.openWriter()) {
-            writer.write("/*\n");
-            writer.write("*\n");
-            writer.write("* Code generated:\n");
-            writer.write("*" + " " + LocalDateTime.now() + "\n");
-            writer.write("*/\n");
             writer.write("package " + packageName + ";\n\n");
 
             writeImportsAndClassImpl(writer, packageName, validAnnotations, interfaceName);
@@ -253,6 +254,39 @@ public class ExceptionRunnerProcessor extends AbstractProcessor {
         }
     }
 
+    /**
+     * Writes a custom {@code @Generated} annotation to the provided {@link Writer}.
+     * <p>
+     * The annotation includes:
+     * <ul>
+     *   <li><b>version</b> – the version of the JAR, retrieved from {@code PROJECT.VERSION}</li>
+     *   <li><b>date</b> – the current generation timestamp, formatted as {@code dd/MM/yyyy HH:mm:ss}</li>
+     *   <li><b>packageInfo</b> – the package name, retrieved from {@code PROJECT.PACKAGE}</li>
+     * </ul>
+     * <p>
+     * This method is typically used during code generation to embed metadata
+     * about the build and environment directly into the generated source code.
+     * </p>
+     *
+     * @param writer the {@link Writer} where the annotation will be written
+     * @throws RuntimeException if an {@link IOException} occurs while writing,
+     *         an error message is also reported via the annotation processing environment
+     */
+    private void writeGeneratedAnnotation(Writer writer) {
+        String version = PROJECT.VERSION.getValue();
+        String infoPackage = PROJECT.PACKAGE.getValue();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
+        String date = LocalDateTime.now().format(formatter);
+        try {
+            writer.write("\n@Generated(\n");
+            writer.write("\tversion=  \"" + version + "\"" + ",\n");
+            writer.write("\tdate=  \"" + date + "\"" + ",\n");
+            writer.write("\tpackageInfo=  \"" + infoPackage + "\"" + "\n");
+            writer.write("\t)\n");
+        } catch (IOException exception) {
+            processingEnv.getMessager().printMessage(Diagnostic.Kind.ERROR, "Error during the writting of the @Generated annotation " + exception.getCause());
+        }
+    }
 
     /**
      * Writes the import statements and the class declaration for the generated
@@ -283,6 +317,7 @@ public class ExceptionRunnerProcessor extends AbstractProcessor {
         List<Boolean> componentModelEqualsSpringList = new ArrayList<>();
 
         writer.write("import org.springframework.stereotype.Component;\n");
+        writer.write("import com.orbis.exception.annotations.Generated;\n");
         for (Element validAnnotation : validAnnotations) {
             methodElement = (ExecutableElement) validAnnotation;
             exceptionNameClass = methodElement.getAnnotation(ExceptionRunner.class).exceptionClass();
@@ -303,6 +338,7 @@ public class ExceptionRunnerProcessor extends AbstractProcessor {
         }
 
         writer.write("import org.springframework.stereotype.Component;\n");
+        writeGeneratedAnnotation(writer);
         writer.write("@Component\n");
         writer.write("public class " + generatedNameClass + " implements " + interfaceName + " {\n\n");
     }
