@@ -101,19 +101,19 @@ public class ExceptionMakerProcessor extends AbstractProcessor {
     private void writeExceptionsFileWithCustomParameterOrder(JavaFileObject javaFileObject, String packageName, String exceptionClassName) {
         try (Writer writer = javaFileObject.openWriter()) {
             writer.write("package " + packageName + ";\n\n");
-            writer.write("import com.orbis.exception.annotations.Generated;\n");
+            writer.write("import com.orbis.exception.annotations.Generated;");
             writeGeneratedAnnotation(writer);
             writer.write("public class " + exceptionClassName + " extends RuntimeException {\n");
 
             writer.write("    private final Object param;\n\n");
 
-            writer.write("    public " + exceptionClassName + "(Object... param) {\n");
-            writer.write("        this.param = param;\n");
-            writer.write("    }\n");
+            writer.write("\tpublic " + exceptionClassName + "(Object... param) {\n");
+            writer.write("\t\tthis.param = param;\n");
+            writer.write("\t}\n");
 
-            writer.write("  public Object getParam(){\n");
-            writer.write("      return param;\n");
-            writer.write("  }\n");
+            writer.write("\tpublic Object getParam(){\n");
+            writer.write("\t\treturn param;\n");
+            writer.write("\t}\n");
 
             writer.write("}\n");
         } catch (IOException exception) {
@@ -152,24 +152,24 @@ public class ExceptionMakerProcessor extends AbstractProcessor {
 
         try (Writer writer = javaFileObject.openWriter()) {
             writer.write("package " + packageName + ";\n\n");
-            writer.write("import com.orbis.exception.annotations.Generated;\n");
+            writer.write("import com.orbis.exception.annotations.Generated;");
             writeGeneratedAnnotation(writer);
             writer.write("public class " + exceptionClassName + " extends RuntimeException {\n");
             writer.write("    private final Object[] params;\n\n");
 
-            writer.write("    public " + exceptionClassName + " (String message) {\n");
-            writer.write("        super(message);\n");
-            writer.write("        this.params = null;\n");
-            writer.write("    }\n\n");
+            writer.write("\tpublic " + exceptionClassName + " (String message) {\n");
+            writer.write("\t\tsuper(message);\n");
+            writer.write("\t\tthis.params = null;\n");
+            writer.write(" \t}\n\n");
 
-            writer.write("    public " + exceptionClassName + "(String message, Object[] params) {\n");
-            writer.write("        super(message);\n");
-            writer.write("        this.params = params;\n");
-            writer.write("    }\n");
+            writer.write("\tpublic " + exceptionClassName + "(String message, Object[] params) {\n");
+            writer.write("\t\tsuper(message);\n");
+            writer.write("\t\tthis.params = params;\n");
+            writer.write("\t}\n");
 
-            writer.write("  public Object[] getParams(){\n");
-            writer.write("      return params;\n");
-            writer.write("  }\n");
+            writer.write("\tpublic Object[] getParams(){\n");
+            writer.write("\t\treturn params;\n");
+            writer.write("\t}\n");
 
             writer.write("}\n");
         } catch (IOException exception) {
@@ -202,7 +202,7 @@ public class ExceptionMakerProcessor extends AbstractProcessor {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
         String date = LocalDateTime.now().format(formatter);
         try {
-            writer.write("@Generated(\n");
+            writer.write("\n@Generated(\n");
             writer.write("\tversion=  \"" + version + "\"" + ",\n");
             writer.write("\tdate=  \"" + date + "\"" + ",\n");
             writer.write("\tpackageInfo=  \"" + infoPackage + "\"" + "\n");
