@@ -3,8 +3,8 @@
 **Exception Maker** is a compile-time code generation library that automatically creates custom exception classes and helper methods for handling exceptions in Spring-based applications.
 
 ___
-#Maven central repository
-link to dependency 
+# Maven central repository
+**link to dependency**
 https://central.sonatype.com/artifact/io.github.zaccalos7/customExceptions
 ---
 
