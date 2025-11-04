@@ -40,4 +40,36 @@ public interface UserExceptionHandler {
     @ExceptionRunner(exceptionClass = "InvalidRequestException")
     void handleInvalidRequest(String message, Object[] params);
 }
+```
+---
+
+## ⚙️ POM Configuration
+
+Add the dependency and configure the annotation processor in your `pom.xml`:
+
+```xml
+<dependency>
+    <groupId>io.github.zaccalos7</groupId>
+    <artifactId>customExceptions</artifactId>
+    <version>1.X.X</version>
+    <scope>compile</scope>
+</dependency>
+
+<build>
+    <plugins>
+        <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-compiler-plugin</artifactId>
+            <configuration>
+                <annotationProcessorPaths>
+                    <path>
+                        <groupId>io.github.zaccalos7</groupId>
+                        <artifactId>customExceptions</artifactId>
+                        <version>1.X.X</version>
+                    </path>
+                </annotationProcessorPaths>
+            </configuration>
+        </plugin>
+    </plugins>
+</build>
 
